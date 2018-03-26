@@ -20,7 +20,7 @@ rule cutadapt:
     input:
         fastq = config["FASTQ"]
     params:
-        ilmn_index = "ACGT"
+        ilmn_index = config["INDEX"]
     output:
         path = "analysis/cutadapt/cutadapt.fastq",
         log_path = "analysis/cutadapt/cutadapt.txt"

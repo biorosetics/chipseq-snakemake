@@ -15,6 +15,11 @@ def main():
         required = True,
         help = "Path to the FastQ file"
     )
+    parser.add_argument(
+        "--index",
+        required=True,
+        help = "Illumina index for cutadapt"
+    )
     args = parser.parse_args()
     snakefile = pkg_resources.resource_filename(__name__, "Snakefile")
-    snakemake.snakemake(snakefile, config={"REFGEN": args.ref_genome, "FASTQ": args.fastq})
+    snakemake.snakemake(snakefile, config={"REFGEN": args.ref_genome, "FASTQ": args.fastq, "INDEX": args.index})

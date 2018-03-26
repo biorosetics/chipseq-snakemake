@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='ccssm',
-    version='0.1',
+    version='0.2',
     description='Candihub Chip Seq Snow Make',
     url='https://github.com/biorosetics/chipseq-snakemake',
     author='Charles Hebert',

@@ -16,6 +16,7 @@ conda install -c bioconda snakemake
 python3 -venv test
 cd test
 source bin/activate 
+pip install git+https://github.com/biorosetics/chipseq-snakemake/archive/0.1.zip
 ```
 
 ## How does it work ?
@@ -42,7 +43,7 @@ snakemake --config REFGEN=...
 Command line:
 
 ```
-ccssm --ref-genome my/path/to/reference/genome_and_bowtie_index --fastq my/path/to/my/fastq
+ccssm --ref-genome my/path/to/reference/genome_and_bowtie_index --fastq my/path/to/my/fastq --index ACGT
 ```
 
 This command will generate in the current directory this files tree:
