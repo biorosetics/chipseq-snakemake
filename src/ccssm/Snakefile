@@ -1,0 +1,83 @@
+rule all:
+    input: 
+        "analysis/GenomeCoverage.txt",
+        "analysis/fastqc_on_cutadapt.done",
+        "analysis/fastqc_on_raw.done"
+
+rule fastqc_on_raw_data:
+    input:
+        fastq = config["FASTQ"],
+    params:
+        dir = "analysis"
+    output: 
+        log = "analysis/fastqc_raw.log",
+        err = "analysis/fastqc_raw.err",
+        flag = touch("analysis/fastqc_on_raw.done")
+    shell: 
+        "fastqc -o {params.dir} {input.fastq} > {output.log} 2> {output.err}"
+
+rule cutadapt:
+    input:
+        fastq = config["FASTQ"]
+    params:
+        ilmn_index = "ACGT"
+    output:
+        path = "analysis/cutadapt/cutadapt.fastq",
+        log_path = "analysis/cutadapt/cutadapt.txt"
+    shell: 
+        "cutadapt -a AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT"
+        " -g GATCGGAAGAGCACACGTCTGAACTCCAGTCAC{params.ilmn_index}ATCTCGTATGCCGTCTTCTGCTTG"
+        " -m 10 -o {output.path} {input.fastq} >> {output.log_path}"
+    
+rule fastqc_on_cutadapt_result:
+    input:
+        fastq = rules.cutadapt.output.path
+    params:
+        dir = "analysis"
+    output:
+        log = "analysis/cutadapt/fastqc_cutadapt.log",
+        err = "analysis/cutadapt/fastqc_cutadapt.err",
+        flag = touch("analysis/fastqc_on_cutadapt.done")
+    shell: 
+        "fastqc -o {params.dir} {input.fastq} > {output.log} 2> {output.err}"
+
+rule bowtie:
+    input:
+        fastq = "analysis/cutadapt/cutadapt.fastq",
+        refgen = config["REFGEN"]
+    output:  
+        bowtie_sam = "analysis/bowtie/mapping.sam",
+        bowtie_log = "analysis/bowtie/mapping.txt"
+    threads: 4
+    shell:
+        "bowtie -m 1 -S -p 2 {input.refgen} {input.fastq} > {output.bowtie_sam} 2> {output.bowtie_log}"
+
+rule samtools_view:
+    input:
+        "analysis/bowtie/mapping.sam"
+    output:
+        "analysis/bowtie/mapping.bam"
+    shell:
+        "samtools view -bS -o {output} {input}"
+    
+rule samtools_sort:
+    input:
+        bam = "analysis/bowtie/mapping.bam"
+    output: 
+        bam_sorted = "analysis/bowtie/mapping_sorted.bam"
+    shell:
+        "samtools sort -o {output.bam_sorted} {input.bam} "
+
+rule samtools_index:
+    input:
+        bam = "analysis/bowtie/mapping_sorted.bam"
+    shell:
+        "samtools index {input.bam}"
+
+rule bedtools:
+    input:
+        bam = "analysis/bowtie/mapping_sorted.bam"
+    output:
+        genome_coverage = "analysis/GenomeCoverage.txt"
+    shell:
+        "genomeCoverageBed -ibam {input.bam} -d > {output.genome_coverage}"
